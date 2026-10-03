@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美國 529 教育基金與跨世代傳承試算器</title>
+  <!-- 引入 Tailwind CSS 美化介面與 Chart.js 圖表庫 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+  <!-- 頂部導航列 -->
+  <header class="bg-indigo-900 text-white shadow-md">
+    <div class="max-w-4xl mx-auto px-4 py-6">
+      <div class="inline-block bg-indigo-700 text-indigo-200 text-xs px-2.5 py-1 rounded-full font-semibold mb-2">移民家庭財富傳承專題</div>
+      <h1 class="text-2xl md:text-3xl font-bold tracking-tight">美國 529 教育基金與跨世代傳承試算</h1>
+      <p class="text-indigo-200 text-sm mt-1">大學學費規劃 × SECURE 2.0 轉 Roth IRA × 孫輩跨世代金庫</p>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-8 space-y-8">
+
+    <!-- 核心互動控制卡片 -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <h2 class="text-lg font-bold text-slate-900 mb-5 flex items-center gap-2">
+        <span>⚙️</span> 參數設定（拖動滑桿即時計算）
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- 初始投入金額 -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-sm font-medium text-slate-700">初始存入總本金 (USD)</label>
+            <span id="txtInitial" class="font-bold text-indigo-600">$140,000</span>
+          </div>
+          <input type="range" id="inputInitial" min="50000" max="300000" step="10000" value="140000" class="w-full accent-indigo-600 cursor-pointer">
+          <p class="text-xs text-slate-400 mt-1">夫妻兩人各7萬可申報 Form 709 利用5年 Superfunding 免稅</p>
+        </div>
+
+        <!-- 小孩目前年齡 -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-sm font-medium text-slate-700">小孩目前年齡</label>
+            <span id="txtAge" class="font-bold text-indigo-600">11 歲</span>
+          </div>
+          <input type="range" id="inputAge" min="0" max="17" step="1" value="11" class="w-full accent-indigo-600 cursor-pointer">
+          <p class="text-xs text-slate-400 mt-1">預設 18 歲入學，距離讀大學還有 <span id="txtYearsToCollege" class="font-semibold text-slate-600">7</span> 年複利期</p>
+        </div>
+
+        <!-- 每年學費 cover 金額 -->
+        <div class="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-sm font-medium text-slate-700">預計每年提領學雜食宿費 (18-22歲 共4年)</label>
+            <span id="txtTuition" class="font-bold text-indigo-600 text-base">$38,000 / 年</span>
+          </div>
+          <input type="range" id="inputTuition" min="15000" max="100000" step="1000" value="38000" class="w-full accent-indigo-600 cursor-pointer">
+          
+          <!-- 參考標籤列 -->
+          <div class="flex justify-between text-xs text-slate-500 mt-2 px-1">
+            <span class="text-emerald-600 font-medium">🏫 頂尖州立公立 (約 $3.5萬)</span>
+            <span class="text-amber-600 font-medium">🏛️ 一般私立/外州公立 (約 $6.5萬)</span>
+            <span class="text-rose-600 font-medium">🎓 常春藤/頂尖私立 ($9萬+)</span>
+          </div>
+        </div>
+
+        <!-- 年化報酬率 -->
+        <div class="md:col-span-2">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-sm font-medium text-slate-700">投資標的年化回報率 (%)</label>
+            <span id="txtRate" class="font-bold text-indigo-600">7.0%</span>
+          </div>
+          <input type="range" id="inputRate" min="4.0" max="10.0" step="0.5" value="7.0" class="w-full accent-indigo-600 cursor-pointer">
+          <div class="flex justify-between text-xs text-slate-400 mt-1">
+            <span>🛡️ 保守穩健 (約 5%)</span>
+            <span class="text-indigo-600 font-semibold">⚖️ 平衡型 (預設 7%)</span>
+            <span>🚀 積極成長 (約 9%)</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 試算結果摘要卡片 -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-center">
+        <div class="text-xs text-slate-500 font-medium">18 歲入學時累積總資產</div>
+        <div id="resCollege" class="text-2xl font-extrabold text-slate-800 mt-2">$224,809</div>
+        <div class="text-xs text-slate-400 mt-1">複利增值結果</div>
+      </div>
+
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-center">
+        <div class="text-xs text-slate-500 font-medium">22 歲畢業轉 Roth IRA 後餘額</div>
+        <div id="resGrad" class="text-2xl font-extrabold text-blue-600 mt-2">$43,150</div>
+        <div class="text-xs text-slate-400 mt-1">已扣除 4 年學費與 $35k IRA</div>
+      </div>
+
+      <div class="bg-white p-5 rounded-xl border border-indigo-100 shadow-sm text-center bg-gradient-to-b from-white to-indigo-50/40">
+        <div class="text-xs text-indigo-600 font-semibold">畢業後再滾 12 年 (可傳孫輩)</div>
+        <div id="resGrandchild" class="text-2xl font-extrabold text-emerald-600 mt-2">$97,180</div>
+        <div class="text-xs text-slate-400 mt-1">孩子 34 歲時的跨世代金庫</div>
+      </div>
+    </section>
+
+    <!-- 視覺化走勢圖 -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-slate-900">📈 529 帳戶完整資產生命週期軌跡</h3>
+        <span class="text-xs text-slate-400">單位: 美元 (USD)</span>
+      </div>
+      <div class="relative h-72 md:h-80 w-full">
+        <canvas id="balanceChart"></canvas>
+      </div>
+      <p class="text-xs text-slate-400 mt-4 leading-relaxed">
+        * 軌跡說明：資產於 18 歲前複利成長；18~22 歲每年扣除自訂大學學費；22 歲畢業時扣除法定上限 $35,000 分批轉入兒子的 Roth IRA；剩餘款項繼續在 529 內免稅增長 12 年，作為孫子女未來的教育啟動基金。
+      </p>
+    </section>
+
+    <!-- 核心知識點筆記 (方便群組朋友閱讀) -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+      <h3 class="font-bold text-slate-900 text-lg">💡 給移民朋友的 4 個關鍵規劃筆記</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600">
+        <div class="bg-slate-50 p-4 rounded-xl">
+          <strong class="text-slate-800 block mb-1">1. 德州居民首選 Utah my529：</strong>
+          德州無州所得稅，因此選本土 Texas 529 毫無優勢。Utah (my529) 管理費僅 0.13%，比起 Texas 的 0.50%，20 年能省下超過 3.5 萬美元的費用侵蝕。
+        </div>
+        <div class="bg-slate-50 p-4 rounded-xl">
+          <strong class="text-slate-800 block mb-1">2. SECURE 2.0 轉 Roth IRA：</strong>
+          529 帳戶開立滿 15 年後，用不完的資金可轉入兒子的 Roth IRA，每人終身上限 $35,000，需符合當年度勞動所得（Earned Income）規定。
+        </div>
+        <div class="bg-slate-50 p-4 rounded-xl">
+          <strong class="text-slate-800 block mb-1">3. 完美的婚姻與債務防火牆：</strong>
+          長輩擔任帳戶 Owner，兒子只是 Beneficiary。兒女未來若遇到婚姻變故或債務，這筆錢依法屬於長輩，兒女的配偶完全無法主張分割。
+        </div>
+        <div class="bg-slate-50 p-4 rounded-xl">
+          <strong class="text-slate-800 block mb-1">4. 跨世代無痛更換受益人：</strong>
+          兒子畢業後剩下的餘額，不需提領變現。等孫子女出生後，長輩只需線上申請「變更受益人為孫子女」，獲利全額免稅無縫接軌繼續滾存。
+        </div>
+      </div>
+    </section>
+
+    <!-- 討論留言區 (支援免登入與匿名留言) -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <h3 class="font-bold text-slate-900 text-lg mb-2">💬 移民朋友交流討論區</h3>
+      <p class="text-xs text-slate-500 mb-6">歡迎在下方分享你的試算年期、費用考量或稅務疑問（免註冊 GitHub 帳號即可留言）：</p>
+      
+      <!-- Cusdis 嵌入碼 -->
+      <div id="cusdis_thread"
+        data-host="https://cusdis.com"
+        data-app-id="6ba07c08-fb9e-4c74-9ae3-2a6231d5bca0"
+        data-page-id="us-529-guide"
+        data-page-title="529 教育基金與跨世代傳承試算">
+      </div>
+      <script async defer src="https://cusdis.com/js/cusdis.es.js"></script>
+    </section>
+
+  </main>
+
+  <footer class="text-center py-8 text-xs text-slate-400">
+    本工具僅供教育與模擬參考，實際稅務規劃請諮詢合格之美國註冊會計師 (CPA) 或理財顧問 (CFP)。
+  </footer>
+
+  <!-- 計算與繪圖前端 JavaScript 引擎 -->
+  <script>
+    const elInitial = document.getElementById('inputInitial');
+    const elAge = document.getElementById('inputAge');
+    const elTuition = document.getElementById('inputTuition');
+    const elRate = document.getElementById('inputRate');
+
+    const txtInitial = document.getElementById('txtInitial');
+    const txtAge = document.getElementById('txtAge');
+    const txtTuition = document.getElementById('txtTuition');
+    const txtRate = document.getElementById('txtRate');
+    const txtYearsToCollege = document.getElementById('txtYearsToCollege');
+
+    const resCollege = document.getElementById('resCollege');
+    const resGrad = document.getElementById('resGrad');
+    const resGrandchild = document.getElementById('resGrandchild');
+
+    const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+    let chart = null;
+
+    function calculate() {
+      const initial = parseFloat(elInitial.value);
+      const age = parseInt(elAge.value);
+      const tuition = parseFloat(elTuition.value);
+      const rate = parseFloat(elRate.value) / 100;
+
+      txtInitial.innerText = fmt.format(initial);
+      txtAge.innerText = `${age} 歲`;
+      txtTuition.innerText = `${fmt.format(tuition)} / 年`;
+      txtRate.innerText = `${(rate * 100).toFixed(1)}%`;
+      txtYearsToCollege.innerText = Math.max(0, 18 - age);
+
+      const labels = [];
+      const data = [];
+      let balance = initial;
+
+      // 模擬時間長度：從目前年齡一直到孩子 34 歲 (大學畢業後再滾 12 年)
+      const targetAge = 34;
+
+      for (let currAge = age; currAge <= targetAge; currAge++) {
+        labels.push(`${currAge} 歲`);
+
+        if (currAge > age) {
+          if (currAge <= 18) {
+            // 讀大學前純成長
+            balance = balance * (1 + rate);
+          } else if (currAge <= 22) {
+            // 18~22 歲讀大學：扣除學費後剩餘資金生息
+            balance = Math.max(0, balance - tuition) * (1 + rate);
+          } else {
+            // 22 歲畢業那一年扣除 $35,000 Roth IRA
+            if (currAge === 23) {
+              balance = Math.max(0, balance - 35000);
+            }
+            // 畢業後留給孫輩持續成長
+            balance = balance * (1 + rate);
+          }
+        }
+
+        data.push(Math.round(balance));
+
+        // 擷取重點年齡數值
+        if (currAge === 18) resCollege.innerText = fmt.format(balance);
+        if (currAge === 22) {
+          const afterIRA = Math.max(0, balance - 35000);
+          resGrad.innerText = fmt.format(afterIRA);
+        }
+        if (currAge === 34) resGrandchild.innerText = fmt.format(balance);
+      }
+
+      updateChart(labels, data);
+    }
+
+    function updateChart(labels, data) {
+      if (chart) {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = data;
+        chart.update();
+        return;
+      }
+
+      const ctx = document.getElementById('balanceChart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '529 帳戶資產淨值',
+            data: data,
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79, 70, 229, 0.08)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.25,
+            pointRadius: 3,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` 帳戶總值: ${fmt.format(ctx.raw)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: { callback: (v) => '$' + (v / 1000) + 'k' },
+              grid: { color: '#f1f5f9' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // 綁定所有滑桿事件
+    [elInitial, elAge, elTuition, elRate].forEach(el => el.addEventListener('input', calculate));
+    
+    // 初始化執行
+    calculate();
+  </script>
+</body>
+</html>
