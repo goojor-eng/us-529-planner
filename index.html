@@ -90,10 +90,12 @@
         <div class="text-xs text-slate-400 mt-1">複利增值結果</div>
       </div>
 
+<!-- 第 2 張卡片 -->
       <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-center">
-        <div class="text-xs text-slate-500 font-medium">22 歲畢業轉 Roth IRA 後餘額</div>
-        <div id="resGrad" class="text-2xl font-extrabold text-blue-600 mt-2">$43,150</div>
-        <div class="text-xs text-slate-400 mt-1">已扣除 4 年學費與 $35k IRA</div>
+        <div class="text-xs text-slate-500 font-medium">22 歲大學畢業時餘額</div>
+        <div id="resGrad" class="text-2xl font-extrabold text-blue-600 mt-2">$78,150</div>
+        <!-- 加上 id="txtGradNote"，會自動動態計算為 22 歲或 26 歲 -->
+        <div id="txtGradNote" class="text-xs text-slate-400 mt-1">需滿 15 年且有工作收入轉 $35k IRA</div>
       </div>
 
       <div class="bg-white p-5 rounded-xl border border-indigo-100 shadow-sm text-center bg-gradient-to-b from-white to-indigo-50/40">
@@ -113,7 +115,7 @@
         <canvas id="balanceChart"></canvas>
       </div>
       <p class="text-xs text-slate-400 mt-4 leading-relaxed">
-        * 軌跡說明：資產於 18 歲前複利成長；18~22 歲每年扣除自訂大學學費；22 歲畢業時扣除法定上限 $35,000 分批轉入兒子的 Roth IRA；剩餘款項繼續在 529 內免稅增長 12 年，作為孫子女未來的教育啟動基金。
+        * 軌跡說明：資產於 18 歲前複利成長；18~22 歲每年扣除自訂大學學費；22 歲畢業與滿15年後扣除法定上限 $35,000 分批轉入兒子的 Roth IRA；剩餘款項繼續在 529 內免稅增長 12 年，作為孫子女未來的教育啟動基金。
       </p>
     </section>
 
@@ -182,7 +184,7 @@
 
     let chart = null;
 
-    function calculate() {
+function calculate() {
       const initial = parseFloat(elInitial.value);
       const age = parseInt(elAge.value);
       const tuition = parseFloat(elTuition.value);
@@ -198,13 +200,12 @@
       const data = [];
       let balance = initial;
 
-      // 模擬時間長度：從目前年齡一直到孩子 34 歲 (大學畢業後再滾 12 年)
-      // 關鍵法規修正：529 必須開立滿 15 年才能轉 IRA
-      const iraEligibleAge = age + 15;
+      // 關鍵邏輯修正：必須「大學畢業(22歲)」且「開戶滿15年(age+15)」雙重條件同時成立！
+      // 0歲開戶 -> 22歲轉；11歲開戶 -> 26歲轉
+      const iraEligibleAge = Math.max(22, age + 15); 
       const targetAge = 34;
 
-let balanceAtGrad = 0;
-      let balanceAfterIRA = 0;
+      let balanceAtGrad = 0;
 
       for (let currAge = age; currAge <= targetAge; currAge++) {
         labels.push(`${currAge} 歲`);
@@ -214,30 +215,34 @@ let balanceAtGrad = 0;
             // 18歲前：純複利增長
             balance = balance * (1 + rate);
           } else if (currAge <= 22) {
-            // 18~22歲大學期間：每年扣除學費後剩餘資金生息
+            // 18~22歲大學期間：扣除學費後剩餘資金生息
             balance = Math.max(0, balance - tuition) * (1 + rate);
           } else {
             // 22歲大學畢業後：資金繼續在 529 複利
             balance = balance * (1 + rate);
 
-            // 正好到達開戶第 15 年（例如 11歲開戶 -> 26歲滿15年）扣除 $35,000 Roth IRA
+            // 當達到「滿15年」且「已大學畢業」的那個年齡，扣除 $35,000 Roth IRA
             if (currAge === iraEligibleAge) {
               balance = Math.max(0, balance - 35000);
-              balanceAfterIRA = balance;
             }
           }
         }
 
         data.push(Math.round(balance));
 
-        // 數值卡片顯示更新
+        // 紀錄重要時間節點
         if (currAge === 18) resCollege.innerText = fmt.format(balance);
         if (currAge === 22) balanceAtGrad = balance;
         if (currAge === targetAge) resGrandchild.innerText = fmt.format(balance);
       }
 
-      // 卡片 2：顯示 22歲畢業時帳戶餘額，並提示將在滿 15 年（如 26 歲）扣除 IRA
+      // 卡片 2：動態顯示畢業時金額，並標註具體是哪一年轉 IRA
       resGrad.innerText = fmt.format(balanceAtGrad);
+      
+      const gradNote = document.getElementById('txtGradNote');
+      if (gradNote) {
+        gradNote.innerText = `將於 ${iraEligibleAge} 歲 (滿15年且就業) 轉 $35k IRA`;
+      }
 
       updateChart(labels, data);
     }
