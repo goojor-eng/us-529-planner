@@ -98,10 +98,11 @@
         <div id="txtGradNote" class="text-xs text-slate-400 mt-1">需滿 15 年且有工作收入轉 $35k IRA</div>
       </div>
 
+<!-- 第 3 張卡片 -->
       <div class="bg-white p-5 rounded-xl border border-indigo-100 shadow-sm text-center bg-gradient-to-b from-white to-indigo-50/40">
-        <div class="text-xs text-indigo-600 font-semibold">畢業後再滾 12 年 (可傳孫輩)</div>
+        <div id="txtGrandchildLabel" class="text-xs text-indigo-600 font-semibold">畢業並轉完 IRA 後傳承餘額</div>
         <div id="resGrandchild" class="text-2xl font-extrabold text-emerald-600 mt-2">$97,180</div>
-        <div class="text-xs text-slate-400 mt-1">孩子 34 歲時的跨世代金庫</div>
+        <div class="text-xs text-slate-400 mt-1">529 剩餘款項留給孫輩金庫</div>
       </div>
     </section>
 
@@ -115,7 +116,7 @@
         <canvas id="balanceChart"></canvas>
       </div>
       <p class="text-xs text-slate-400 mt-4 leading-relaxed">
-        * 軌跡說明：資產於 18 歲前複利成長；18~22 歲每年扣除自訂大學學費；22 歲畢業與滿15年後扣除法定上限 $35,000 分批轉入兒子的 Roth IRA；剩餘款項繼續在 529 內免稅增長 12 年，作為孫子女未來的教育啟動基金。
+        * 軌跡說明：資產於 18 歲前複利成長；18~22 歲每年扣除自訂大學學費；22 歲畢業與滿15年後扣除法定上限 $35,000 分5年轉入子女的 Roth IRA；剩餘款項繼續在 529 內免稅增長 12 年，作為孫子女未來的教育啟動基金。
       </p>
     </section>
 
@@ -137,7 +138,7 @@
         </div>
         <div class="bg-slate-50 p-4 rounded-xl">
           <strong class="text-slate-800 block mb-1">4. 跨世代無痛更換受益人：</strong>
-          兒子畢業後剩下的餘額，不需提領變現。等孫子女出生後，長輩只需線上申請「變更受益人為孫子女」，獲利全額免稅無縫接軌繼續滾存。
+          子女畢業後剩下的餘額，不需提領變現。等孫子女出生後，長輩只需線上申請「變更受益人為孫子女」，獲利全額免稅無縫接軌繼續滾存。
         </div>
       </div>
     </section>
@@ -200,11 +201,14 @@ function calculate() {
       const data = [];
       let balance = initial;
 
-      // 關鍵邏輯修正：必須「大學畢業(22歲)」且「開戶滿15年(age+15)」雙重條件同時成立！
-      // 0歲開戶 -> 22歲轉；11歲開戶 -> 26歲轉
-      const iraEligibleAge = Math.max(22, age + 15); 
-      const targetAge = 34;
+      // 嚴謹法規：需同時滿足「開戶滿15年(age+15)」與「大學畢業具勞動所得(22歲)」
+      const iraStartAge = Math.max(22, age + 15);
+      // 依 SECURE 2.0 規定：每年上限 $7,000，分 5 年完成 $35,000 額度
+      const iraEndAge = iraStartAge + 5; 
+      // 確保轉完 IRA 後，至少再模擬 7~10 年以展示孫輩教育金庫成長
+      const targetAge = Math.max(34, iraEndAge + 7);
 
+      let balanceAt18 = 0;
       let balanceAtGrad = 0;
 
       for (let currAge = age; currAge <= targetAge; currAge++) {
@@ -212,36 +216,42 @@ function calculate() {
 
         if (currAge > age) {
           if (currAge <= 18) {
-            // 18歲前：純複利增長
+            // 階段 1 (18歲前)：純複利成長
             balance = balance * (1 + rate);
           } else if (currAge <= 22) {
-            // 18~22歲大學期間：扣除學費後剩餘資金生息
+            // 階段 2 (18~22歲)：大學4年，每年扣除自訂學雜費，剩餘資金生息
             balance = Math.max(0, balance - tuition) * (1 + rate);
           } else {
-            // 22歲大學畢業後：資金繼續在 529 複利
-            balance = balance * (1 + rate);
-
-            // 當達到「滿15年」且「已大學畢業」的那個年齡，扣除 $35,000 Roth IRA
-            if (currAge === iraEligibleAge) {
-              balance = Math.max(0, balance - 35000);
+            // 階段 3 (22歲畢業後)：資金在 529 內繼續複利
+            // 若落在合法轉移年限內 (連續5年)，每年按 IRA 法定上限轉出 $7,000
+            if (currAge > iraStartAge && currAge <= iraEndAge) {
+              balance = Math.max(0, balance - 7000);
             }
+            balance = balance * (1 + rate);
           }
         }
 
         data.push(Math.round(balance));
 
-        // 紀錄重要時間節點
-        if (currAge === 18) resCollege.innerText = fmt.format(balance);
+        if (currAge === 18) balanceAt18 = balance;
         if (currAge === 22) balanceAtGrad = balance;
-        if (currAge === targetAge) resGrandchild.innerText = fmt.format(balance);
       }
 
-      // 卡片 2：動態顯示畢業時金額，並標註具體是哪一年轉 IRA
+      // 卡片 1：18 歲入學總額
+      resCollege.innerText = fmt.format(balanceAt18);
+
+      // 卡片 2：22 歲畢業時餘額，並動態說明 5 年分期轉移區間
       resGrad.innerText = fmt.format(balanceAtGrad);
-      
       const gradNote = document.getElementById('txtGradNote');
       if (gradNote) {
-        gradNote.innerText = `將於 ${iraEligibleAge} 歲 (滿15年且就業) 轉 $35k IRA`;
+        gradNote.innerText = `${iraStartAge}～${iraEndAge} 歲分 5 年每年轉 $7k (共$35k)`;
+      }
+
+      // 卡片 3：完整轉完 Roth IRA 並持續滾存至目標年齡之餘額
+      resGrandchild.innerText = fmt.format(balance);
+      const grandchildLabel = document.getElementById('txtGrandchildLabel');
+      if (grandchildLabel) {
+        grandchildLabel.innerText = `孩子 ${targetAge} 歲時傳承餘額`;
       }
 
       updateChart(labels, data);
