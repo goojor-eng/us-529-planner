@@ -123,15 +123,15 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600">
         <div class="bg-slate-50 p-4 rounded-xl">
           <strong class="text-slate-800 block mb-1">1. 德州居民首選 Utah my529：</strong>
-          德州無州所得稅，因此選本土 Texas 529 毫無優勢。Utah (my529) 管理費僅 0.13%，比起 Texas 的 0.50%，20 年能省下超過 3.5 萬美元的費用侵蝕。
+          德州無州所得稅，選本土 Texas 529 毫無優勢。Utah (my529) 管理費僅 0.13%，比起 Texas 的 0.50%，20 年能省下超過 3.5 萬美元的費用侵蝕。
         </div>
         <div class="bg-slate-50 p-4 rounded-xl">
           <strong class="text-slate-800 block mb-1">2. SECURE 2.0 轉 Roth IRA：</strong>
-          529 帳戶開立滿 15 年後，用不完的資金可轉入兒子的 Roth IRA，每人終身上限 $35,000，需符合當年度勞動所得（Earned Income）規定。
+          529 帳戶開立需滿 15 年，用不完的資金可轉入子女的 Roth IRA，每人終身上限 $35,000，需符合當年度勞動所得（Earned Income）規定。
         </div>
         <div class="bg-slate-50 p-4 rounded-xl">
           <strong class="text-slate-800 block mb-1">3. 完美的婚姻與債務防火牆：</strong>
-          長輩擔任帳戶 Owner，兒子只是 Beneficiary。兒女未來若遇到婚姻變故或債務，這筆錢依法屬於長輩，兒女的配偶完全無法主張分割。
+          長輩擔任帳戶 Owner，子女只是 Beneficiary。兒女未來若遇到婚姻變故或債務，這筆錢依法屬於長輩，兒女的配偶完全無法主張分割。
         </div>
         <div class="bg-slate-50 p-4 rounded-xl">
           <strong class="text-slate-800 block mb-1">4. 跨世代無痛更換受益人：</strong>
@@ -199,38 +199,45 @@
       let balance = initial;
 
       // 模擬時間長度：從目前年齡一直到孩子 34 歲 (大學畢業後再滾 12 年)
+      // 關鍵法規修正：529 必須開立滿 15 年才能轉 IRA
+      const iraEligibleAge = age + 15;
       const targetAge = 34;
+
+let balanceAtGrad = 0;
+      let balanceAfterIRA = 0;
 
       for (let currAge = age; currAge <= targetAge; currAge++) {
         labels.push(`${currAge} 歲`);
 
         if (currAge > age) {
           if (currAge <= 18) {
-            // 讀大學前純成長
+            // 18歲前：純複利增長
             balance = balance * (1 + rate);
           } else if (currAge <= 22) {
-            // 18~22 歲讀大學：扣除學費後剩餘資金生息
+            // 18~22歲大學期間：每年扣除學費後剩餘資金生息
             balance = Math.max(0, balance - tuition) * (1 + rate);
           } else {
-            // 22 歲畢業那一年扣除 $35,000 Roth IRA
-            if (currAge === 23) {
-              balance = Math.max(0, balance - 35000);
-            }
-            // 畢業後留給孫輩持續成長
+            // 22歲大學畢業後：資金繼續在 529 複利
             balance = balance * (1 + rate);
+
+            // 正好到達開戶第 15 年（例如 11歲開戶 -> 26歲滿15年）扣除 $35,000 Roth IRA
+            if (currAge === iraEligibleAge) {
+              balance = Math.max(0, balance - 35000);
+              balanceAfterIRA = balance;
+            }
           }
         }
 
         data.push(Math.round(balance));
 
-        // 擷取重點年齡數值
+        // 數值卡片顯示更新
         if (currAge === 18) resCollege.innerText = fmt.format(balance);
-        if (currAge === 22) {
-          const afterIRA = Math.max(0, balance - 35000);
-          resGrad.innerText = fmt.format(afterIRA);
-        }
-        if (currAge === 34) resGrandchild.innerText = fmt.format(balance);
+        if (currAge === 22) balanceAtGrad = balance;
+        if (currAge === targetAge) resGrandchild.innerText = fmt.format(balance);
       }
+
+      // 卡片 2：顯示 22歲畢業時帳戶餘額，並提示將在滿 15 年（如 26 歲）扣除 IRA
+      resGrad.innerText = fmt.format(balanceAtGrad);
 
       updateChart(labels, data);
     }
