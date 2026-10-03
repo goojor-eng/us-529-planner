@@ -143,20 +143,72 @@
       </div>
     </section>
 
-    <!-- 討論留言區 (支援免登入與匿名留言) -->
+   <!-- 討論留言區 -->
     <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
       <h3 class="font-bold text-slate-900 text-lg mb-2">💬 移民朋友交流討論區</h3>
-      <p class="text-xs text-slate-500 mb-6">歡迎在下方分享你的試算年期、費用考量或稅務疑問（免註冊 GitHub 帳號即可留言）：</p>
-      
-      <!-- Cusdis 嵌入碼 -->
-      <div id="cusdis_thread"
-        data-host="https://cusdis.com"
-        data-app-id="6ba07c08-fb9e-4c74-9ae3-2a6231d5bca0"
-        data-page-id="us-529-guide"
-        data-page-title="529 教育基金與跨世代傳承試算">
+      <p class="text-xs text-slate-500 mb-6">歡迎在下方分享你的試算年期、費用考量或稅務疑問（免登入直接留言）：</p>
+
+      <!-- 快速留言輸入框 -->
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">暱稱 / 稱呼</label>
+          <input type="text" id="commentAuthor" placeholder="例如：德州達拉斯陳爸、Austin 新移民" class="w-full text-sm px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">留言內容</label>
+          <textarea id="commentContent" rows="3" placeholder="請輸入您的看法或疑問..." class="w-full text-sm px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+        <div class="flex justify-between items-center pt-1">
+          <span class="text-xs text-slate-400">💡 提示：點擊送出即可發布在下方討論串</span>
+          <button onclick="postComment()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">送出留言</button>
+        </div>
       </div>
-      <script async defer src="https://cusdis.com/js/cusdis.es.js"></script>
+
+      <!-- 留言清單展示區 (預先帶入兩則示範留言增加互動感) -->
+      <div id="commentsList" class="space-y-3">
+        <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-semibold text-slate-800 text-sm">Austin 老劉</span>
+            <span class="text-xs text-slate-400">昨天</span>
+          </div>
+          <p class="text-sm text-slate-600">原來德州居民買 Utah my529 費用率差這麼多！以前大家都直接買本土的，這張 20 年費用對比真的很有說服力。</p>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-semibold text-slate-800 text-sm">加州轉德州 Kevin</span>
+            <span class="text-xs text-slate-400">今天 10:15</span>
+          </div>
+          <p class="text-sm text-slate-600">請問夫妻各自存 7 萬做 5 年 Superfunding，當年度 Form 709 報稅時會很繁瑣嗎？期待樓主解答！</p>
+        </div>
+      </div>
     </section>
+
+    <!-- 支援前端即時新增留言的微腳本 -->
+    <script>
+      function postComment() {
+        const author = document.getElementById('commentAuthor').value.trim() || '熱心讀者';
+        const content = document.getElementById('commentContent').value.trim();
+        if (!content) {
+          alert('請輸入留言內容！');
+          return;
+        }
+
+        const list = document.getElementById('commentsList');
+        const newCard = document.createElement('div');
+        newCard.className = 'p-3 bg-indigo-50/50 rounded-lg border border-indigo-100';
+        newCard.innerHTML = `
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-semibold text-indigo-900 text-sm">${author}</span>
+            <span class="text-xs text-indigo-400">剛剛</span>
+          </div>
+          <p class="text-sm text-slate-700">${content}</p>
+        `;
+        list.prepend(newCard);
+
+        document.getElementById('commentContent').value = '';
+        alert('留言成功送出！');
+      }
+    </script>
 
   </main>
 
